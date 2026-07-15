@@ -57,15 +57,27 @@ public class BenchmarkTest00017 extends HttpServlet {
             cmd = org.owasp.benchmark.helpers.Utils.getOSCommandString("echo");
         }
 
+        String safeParam = "default";
+        String[] allowedValues = {"safe1", "safe2", "default"};
+        if ("value1".equals(param)) {
+            safeParam = allowedValues[0];
+        } else if ("value2".equals(param)) {
+            safeParam = allowedValues[1];
+        } else {
+            if (param != null && param.matches("^[a-zA-Z0-9_.-]+$")) {
+                safeParam = param;
+            }
+        }
+
         Runtime r = Runtime.getRuntime();
 
         try {
-            Process p = r.exec(cmd + param);
+            Process p = r.exec(cmd + safeParam);
             org.owasp.benchmark.helpers.Utils.printOSCommandResults(p, response);
         } catch (IOException e) {
             System.out.println("Problem executing cmdi - TestCase");
             response.getWriter()
-                    .println(org.owasp.esapi.ESAPI.encoder().encodeForHTML(e.getMessage()));
+                    .println("Problem executing cmdi: An error occurred");
             return;
         }
     }

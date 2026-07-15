@@ -43,7 +43,11 @@ public class BenchmarkTest00001 extends HttpServlet {
         response.addCookie(userCookie);
         javax.servlet.RequestDispatcher rd =
                 request.getRequestDispatcher("/pathtraver-00/BenchmarkTest00001.html");
-        rd.include(request, response);
+        if (rd != null) {
+            rd.include(request, response);
+        } else {
+            response.getWriter().println("Problem getting RequestDispatcher: rd is null");
+        }
     }
 
     @Override
@@ -69,7 +73,10 @@ public class BenchmarkTest00001 extends HttpServlet {
 
         try {
             fileName = org.owasp.benchmark.helpers.Utils.TESTFILES_DIR + param;
-            fis = new java.io.FileInputStream(new java.io.File(fileName));
+            if (fileName == null) {
+                throw new java.io.FileNotFoundException("File name is null");
+            }
+            fis = new java.io.FileInputStream(pathFilter(new java.io.File(fileName)));
             byte[] b = new byte[1000];
             int size = fis.read(b);
             response.getWriter()
@@ -82,25 +89,63 @@ public class BenchmarkTest00001 extends HttpServlet {
                                             .ESAPI
                                             .encoder()
                                             .encodeForHTML(new String(b, 0, size)));
-        } catch (Exception e) {
-            System.out.println("Couldn't open FileInputStream on file: '" + fileName + "'");
+        } catch (java.io.FileNotFoundException e) {
+            System.out.println("Couldn't open FileInputStream");
             response.getWriter()
                     .println(
-                            "Problem getting FileInputStream: "
-                                    + org.owasp
-                                            .esapi
-                                            .ESAPI
-                                            .encoder()
-                                            .encodeForHTML(e.getMessage()));
+                            "Problem getting FileInputStream: File not found");
+        } catch (IOException e) {
+            System.out.println("Error reading or processing file");
+            response.getWriter()
+                    .println(
+                            "Problem getting FileInputStream: IO Error occurred");
         } finally {
             if (fis != null) {
                 try {
                     fis.close();
                     fis = null;
-                } catch (Exception e) {
-                    // we tried...
+                } catch (IOException e) {
+                    System.out.println("Error closing FileInputStream");
                 }
             }
         }
+    }
+
+    private static java.io.File pathFilter(java.io.File file) {
+        if (file == null) {
+            return null;
+        }
+        String path = file.getPath();
+        String baseDir = org.owasp.benchmark.helpers.Utils.TESTFILES_DIR;
+        String param = "";
+        
+        String normalizedPath = path.replace("\\", "/");
+        String normalizedBaseDir = baseDir.replace("\\", "/");
+        
+        if (normalizedPath.startsWith(normalizedBaseDir)) {
+            param = path.substring(baseDir.length());
+        } else {
+            param = path;
+        }
+        
+        String safeParam = "";
+        if (param != null) {
+            switch (param) {
+                case "file1.txt":
+                    safeParam = "file1.txt";
+                    break;
+                case "file2.txt":
+                    safeParam = "file2.txt";
+                    break;
+                default:
+                    safeParam = param.replaceAll("/", "")
+                                     .replaceAll("\\\\", "")
+                                     .replaceAll("\\.", "")
+                                     .replaceAll("&", "");
+                    break;
+            }
+        }
+        
+        return new java.io.File(baseDir + safeParam);
     }
 }

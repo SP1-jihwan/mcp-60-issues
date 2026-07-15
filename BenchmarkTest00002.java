@@ -43,7 +43,11 @@ public class BenchmarkTest00002 extends HttpServlet {
         response.addCookie(userCookie);
         javax.servlet.RequestDispatcher rd =
                 request.getRequestDispatcher("/pathtraver-00/BenchmarkTest00002.html");
-        rd.include(request, response);
+        if (rd != null) {
+            rd.include(request, response);
+        } else {
+            response.getWriter().println("Problem getting RequestDispatcher: rd is null");
+        }
     }
 
     @Override
@@ -69,25 +73,71 @@ public class BenchmarkTest00002 extends HttpServlet {
 
         try {
             fileName = org.owasp.benchmark.helpers.Utils.TESTFILES_DIR + param;
-
-            fos = new java.io.FileOutputStream(fileName, false);
+            if (fileName == null) {
+                throw new java.io.FileNotFoundException("File name is null");
+            }
+            fos = new java.io.FileOutputStream(pathFilter(fileName), false);
             response.getWriter()
                     .println(
                             "Now ready to write to file: "
                                     + org.owasp.esapi.ESAPI.encoder().encodeForHTML(fileName));
 
-        } catch (Exception e) {
-            System.out.println("Couldn't open FileOutputStream on file: '" + fileName + "'");
-            //			System.out.println("File exception caught and swallowed: " + e.getMessage());
+        } catch (java.io.FileNotFoundException e) {
+            System.out.println("Couldn't open FileOutputStream");
+            response.getWriter()
+                    .println(
+                            "Problem getting FileOutputStream: File not found");
+        } catch (IOException e) {
+            System.out.println("Error writing or processing file");
+            response.getWriter()
+                    .println(
+                            "Problem getting FileOutputStream: IO Error occurred");
         } finally {
             if (fos != null) {
                 try {
                     fos.close();
                     fos = null;
-                } catch (Exception e) {
-                    // we tried...
+                } catch (IOException e) {
+                    System.out.println("Error closing FileOutputStream");
                 }
             }
         }
+    }
+
+    private static String pathFilter(String path) {
+        if (path == null) {
+            return null;
+        }
+        String baseDir = org.owasp.benchmark.helpers.Utils.TESTFILES_DIR;
+        String param = "";
+        
+        String normalizedPath = path.replace("\\", "/");
+        String normalizedBaseDir = baseDir.replace("\\", "/");
+        
+        if (normalizedPath.startsWith(normalizedBaseDir)) {
+            param = path.substring(baseDir.length());
+        } else {
+            param = path;
+        }
+        
+        String safeParam = "";
+        if (param != null) {
+            switch (param) {
+                case "file1.txt":
+                    safeParam = "file1.txt";
+                    break;
+                case "file2.txt":
+                    safeParam = "file2.txt";
+                    break;
+                default:
+                    safeParam = param.replaceAll("/", "")
+                                     .replaceAll("\\\\", "")
+                                     .replaceAll("\\.", "")
+                                     .replaceAll("&", "");
+                    break;
+            }
+        }
+        
+        return baseDir + safeParam;
     }
 }

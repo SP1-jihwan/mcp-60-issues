@@ -62,12 +62,16 @@ public class BenchmarkTest00035 extends HttpServlet {
             java.util.Properties benchmarkprops = new java.util.Properties();
             benchmarkprops.load(
                     this.getClass().getClassLoader().getResourceAsStream("benchmark.properties"));
-            String algorithm = benchmarkprops.getProperty("cryptoAlg1", "DESede/ECB/PKCS5Padding");
+            String algorithm = "AES/CBC/PKCS5Padding";
             javax.crypto.Cipher c = javax.crypto.Cipher.getInstance(algorithm);
 
             // Prepare the cipher to encrypt
-            javax.crypto.SecretKey key = javax.crypto.KeyGenerator.getInstance("DES").generateKey();
-            c.init(javax.crypto.Cipher.ENCRYPT_MODE, key);
+            javax.crypto.SecretKey key = javax.crypto.KeyGenerator.getInstance("AES").generateKey();
+            java.security.SecureRandom random = new java.security.SecureRandom();
+            byte[] iv = random.generateSeed(16);
+            java.security.spec.AlgorithmParameterSpec paramSpec =
+                    new javax.crypto.spec.IvParameterSpec(iv);
+            c.init(javax.crypto.Cipher.ENCRYPT_MODE, key, paramSpec);
 
             // encrypt and store the results
             byte[] input = {(byte) '?'};
@@ -90,13 +94,12 @@ public class BenchmarkTest00035 extends HttpServlet {
                     new java.io.File(
                             new java.io.File(org.owasp.benchmark.helpers.Utils.TESTFILES_DIR),
                             "passwordFile.txt");
-            java.io.FileWriter fw =
-                    new java.io.FileWriter(fileTarget, true); // the true will append the new data
-            fw.write(
-                    "secret_value="
-                            + org.owasp.esapi.ESAPI.encoder().encodeForBase64(result, true)
-                            + "\n");
-            fw.close();
+            try (java.io.FileWriter fw = new java.io.FileWriter(fileTarget, true)) {
+                fw.write(
+                        "secret_value="
+                                + org.owasp.esapi.ESAPI.encoder().encodeForBase64(result, true)
+                                + "\n");
+            }
             response.getWriter()
                     .println(
                             "Sensitive value: '"
@@ -104,19 +107,29 @@ public class BenchmarkTest00035 extends HttpServlet {
                                             .esapi
                                             .ESAPI
                                             .encoder()
-                                            .encodeForHTML(new String(input))
+                                            .encodeForHTML(new String(xssFilter(input)))
                                     + "' encrypted and stored<br/>");
 
         } catch (java.security.NoSuchAlgorithmException
                 | javax.crypto.NoSuchPaddingException
                 | javax.crypto.IllegalBlockSizeException
                 | javax.crypto.BadPaddingException
-                | java.security.InvalidKeyException e) {
+                | java.security.InvalidKeyException
+                | java.security.InvalidAlgorithmParameterException e) {
             response.getWriter()
                     .println(
                             "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
             throw new ServletException(e);
         }
+    }
+
+    private static byte[] xssFilter(byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        String str = new String(data);
+        str = str.replaceAll("<", "&lt;");
+        str = str.replaceAll(">", "&gt;");
+        return str.getBytes();
     }
 }

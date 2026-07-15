@@ -52,13 +52,13 @@ public class BenchmarkTest00020 extends HttpServlet {
         //	    	(byte)0x44, (byte)0x21, (byte)0xC3, (byte)0xC3033
         //	    };
         java.security.SecureRandom random = new java.security.SecureRandom();
-        byte[] iv = random.generateSeed(8); // DES requires 8 byte keys
+        byte[] iv = random.generateSeed(16); // AES requires 16 byte IV
 
         try {
             javax.crypto.Cipher c =
-                    javax.crypto.Cipher.getInstance("DES/CBC/PKCS5Padding", "SunJCE");
+                    javax.crypto.Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
             // Prepare the cipher to encrypt
-            javax.crypto.SecretKey key = javax.crypto.KeyGenerator.getInstance("DES").generateKey();
+            javax.crypto.SecretKey key = javax.crypto.KeyGenerator.getInstance("AES").generateKey();
             java.security.spec.AlgorithmParameterSpec paramSpec =
                     new javax.crypto.spec.IvParameterSpec(iv);
             c.init(javax.crypto.Cipher.ENCRYPT_MODE, key, paramSpec);
@@ -84,13 +84,12 @@ public class BenchmarkTest00020 extends HttpServlet {
                     new java.io.File(
                             new java.io.File(org.owasp.benchmark.helpers.Utils.TESTFILES_DIR),
                             "passwordFile.txt");
-            java.io.FileWriter fw =
-                    new java.io.FileWriter(fileTarget, true); // the true will append the new data
-            fw.write(
-                    "secret_value="
-                            + org.owasp.esapi.ESAPI.encoder().encodeForBase64(result, true)
-                            + "\n");
-            fw.close();
+            try (java.io.FileWriter fw = new java.io.FileWriter(fileTarget, true)) {
+                fw.write(
+                        "secret_value="
+                                + org.owasp.esapi.ESAPI.encoder().encodeForBase64(result, true)
+                                + "\n");
+            }
             response.getWriter()
                     .println(
                             "Sensitive value: '"
@@ -98,54 +97,33 @@ public class BenchmarkTest00020 extends HttpServlet {
                                             .esapi
                                             .ESAPI
                                             .encoder()
-                                            .encodeForHTML(new String(input))
+                                            .encodeForHTML(new String(xssFilter(input)))
                                     + "' encrypted and stored<br/>");
 
-        } catch (java.security.NoSuchAlgorithmException e) {
+        } catch (java.security.NoSuchAlgorithmException
+                | java.security.NoSuchProviderException
+                | javax.crypto.NoSuchPaddingException
+                | javax.crypto.IllegalBlockSizeException
+                | javax.crypto.BadPaddingException
+                | java.security.InvalidKeyException
+                | java.security.InvalidAlgorithmParameterException e) {
             response.getWriter()
                     .println(
                             "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
-            throw new ServletException(e);
-        } catch (java.security.NoSuchProviderException e) {
-            response.getWriter()
-                    .println(
-                            "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
-            throw new ServletException(e);
-        } catch (javax.crypto.NoSuchPaddingException e) {
-            response.getWriter()
-                    .println(
-                            "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
-            throw new ServletException(e);
-        } catch (javax.crypto.IllegalBlockSizeException e) {
-            response.getWriter()
-                    .println(
-                            "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
-            throw new ServletException(e);
-        } catch (javax.crypto.BadPaddingException e) {
-            response.getWriter()
-                    .println(
-                            "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
-            throw new ServletException(e);
-        } catch (java.security.InvalidKeyException e) {
-            response.getWriter()
-                    .println(
-                            "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
-            throw new ServletException(e);
-        } catch (java.security.InvalidAlgorithmParameterException e) {
-            response.getWriter()
-                    .println(
-                            "Problem executing crypto - javax.crypto.Cipher.getInstance(java.lang.String,java.security.Provider) Test Case");
-            e.printStackTrace(response.getWriter());
             throw new ServletException(e);
         }
         response.getWriter()
                 .println(
                         "Crypto Test javax.crypto.Cipher.getInstance(java.lang.String,java.lang.String) executed");
+    }
+
+    private static byte[] xssFilter(byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        String str = new String(data);
+        str = str.replaceAll("<", "&lt;");
+        str = str.replaceAll(">", "&gt;");
+        return str.getBytes();
     }
 }

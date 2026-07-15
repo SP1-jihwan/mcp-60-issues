@@ -57,6 +57,9 @@ public class BenchmarkTest00012 extends HttpServlet {
             String base = "ou=users,ou=system";
             javax.naming.directory.SearchControls sc = new javax.naming.directory.SearchControls();
             sc.setSearchScope(javax.naming.directory.SearchControls.SUBTREE_SCOPE);
+            if (param == null || !param.matches("[\\w\\s]*")) {
+                throw new IllegalArgumentException("Invalid input");
+            }
             String filter = "(&(objectclass=person))(|(uid=" + param + ")(street={0}))";
             Object[] filters = new Object[] {"The streetz 4 Ms bar"};
 
@@ -69,28 +72,45 @@ public class BenchmarkTest00012 extends HttpServlet {
             while (results.hasMore()) {
                 javax.naming.directory.SearchResult sr =
                         (javax.naming.directory.SearchResult) results.next();
-                javax.naming.directory.Attributes attrs = sr.getAttributes();
-
-                javax.naming.directory.Attribute attr = attrs.get("uid");
-                javax.naming.directory.Attribute attr2 = attrs.get("street");
-                if (attr != null) {
-                    response.getWriter()
-                            .println(
-                                    "LDAP query results:<br>"
-                                            + "Record found with name "
-                                            + org.owasp
-                                                    .esapi
-                                                    .ESAPI
-                                                    .encoder()
-                                                    .encodeForHTML(attr.get().toString())
-                                            + "<br>Address: "
-                                            + org.owasp
-                                                    .esapi
-                                                    .ESAPI
-                                                    .encoder()
-                                                    .encodeForHTML(attr2.get().toString())
-                                            + "<br>");
-                    found = true;
+                if (sr != null) {
+                    javax.naming.directory.Attributes attrs = sr.getAttributes();
+                    if (attrs != null) {
+                        javax.naming.directory.Attribute attr = attrs.get("uid");
+                        javax.naming.directory.Attribute attr2 = attrs.get("street");
+                        if (attr != null) {
+                            Object temp1 = attr.get();
+                            if (temp1 != null) {
+                                if (attr2 != null) {
+                                    Object temp2 = attr2.get();
+                                    if (temp2 != null) {
+                                        response.getWriter()
+                                                .println(
+                                                        "LDAP query results:<br>"
+                                                                + "Record found with name "
+                                                                + org.owasp
+                                                                        .esapi
+                                                                        .ESAPI
+                                                                        .encoder()
+                                                                        .encodeForHTML(temp1.toString())
+                                                                + "<br>Address: "
+                                                                + org.owasp
+                                                                        .esapi
+                                                                        .ESAPI
+                                                                        .encoder()
+                                                                        .encodeForHTML(temp2.toString())
+                                                                + "<br>");
+                                    } else {
+                                        response.getWriter()
+                                                .println("LDAP query results:<br>Record found but Address is not available<br>");
+                                    }
+                                } else {
+                                    response.getWriter()
+                                            .println("LDAP query results:<br>Record found but Address is not available<br>");
+                                }
+                            }
+                            found = true;
+                        }
+                    }
                 }
             }
             if (!found) {
@@ -104,7 +124,7 @@ public class BenchmarkTest00012 extends HttpServlet {
         } finally {
             try {
                 ads.closeDirContext();
-            } catch (Exception e) {
+            } catch (javax.naming.NamingException e) {
                 throw new ServletException(e);
             }
         }
