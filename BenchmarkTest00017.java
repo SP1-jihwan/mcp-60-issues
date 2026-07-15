@@ -64,9 +64,7 @@ public class BenchmarkTest00017 extends HttpServlet {
         } else if ("value2".equals(param)) {
             safeParam = allowedValues[1];
         } else {
-            if (param != null && param.matches("^[a-zA-Z0-9_.-]+$")) {
-                safeParam = param;
-            }
+            safeParam = allowedValues[2];
         }
 
         Runtime r = Runtime.getRuntime();

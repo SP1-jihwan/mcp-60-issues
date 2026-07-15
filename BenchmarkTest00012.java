@@ -60,8 +60,8 @@ public class BenchmarkTest00012 extends HttpServlet {
             if (param == null || !param.matches("[\\w\\s]*")) {
                 throw new IllegalArgumentException("Invalid input");
             }
-            String filter = "(&(objectclass=person))(|(uid=" + param + ")(street={0}))";
-            Object[] filters = new Object[] {"The streetz 4 Ms bar"};
+            String filter = "(&(objectclass=person))(|(uid={0})(street={1}))";
+            Object[] filters = new Object[] {param, "The streetz 4 Ms bar"};
 
             javax.naming.directory.DirContext ctx = ads.getDirContext();
             javax.naming.directory.InitialDirContext idc =

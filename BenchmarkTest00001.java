@@ -76,19 +76,27 @@ public class BenchmarkTest00001 extends HttpServlet {
             if (fileName == null) {
                 throw new java.io.FileNotFoundException("File name is null");
             }
-            fis = new java.io.FileInputStream(pathFilter(new java.io.File(fileName)));
+            fis = new java.io.FileInputStream(pathFilter(pathFilter(new java.io.File(fileName))));
             byte[] b = new byte[1000];
             int size = fis.read(b);
-            response.getWriter()
-                    .println(
-                            "The beginning of file: '"
-                                    + org.owasp.esapi.ESAPI.encoder().encodeForHTML(fileName)
-                                    + "' is:\n\n"
-                                    + org.owasp
-                                            .esapi
-                                            .ESAPI
-                                            .encoder()
-                                            .encodeForHTML(new String(b, 0, size)));
+            if (size != -1) {
+                response.getWriter()
+                        .println(
+                                "The beginning of file: '"
+                                        + org.owasp.esapi.ESAPI.encoder().encodeForHTML(fileName)
+                                        + "' is:\n\n"
+                                        + org.owasp
+                                                .esapi
+                                                .ESAPI
+                                                .encoder()
+                                                .encodeForHTML(new String(b, 0, size)));
+            } else {
+                response.getWriter()
+                        .println(
+                                "The beginning of file: '"
+                                        + org.owasp.esapi.ESAPI.encoder().encodeForHTML(fileName)
+                                        + "' is empty.");
+            }
         } catch (java.io.FileNotFoundException e) {
             System.out.println("Couldn't open FileInputStream");
             response.getWriter()
@@ -99,6 +107,11 @@ public class BenchmarkTest00001 extends HttpServlet {
             response.getWriter()
                     .println(
                             "Problem getting FileInputStream: IO Error occurred");
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred");
+            response.getWriter()
+                    .println(
+                            "Problem getting FileInputStream: An error occurred");
         } finally {
             if (fis != null) {
                 try {

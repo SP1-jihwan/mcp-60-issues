@@ -60,9 +60,7 @@ public class BenchmarkTest00007 extends HttpServlet {
         } else if ("value2".equals(param)) {
             safeParam = allowedValues[1];
         } else {
-            if (param != null && param.matches("^[a-zA-Z0-9_.-]+$")) {
-                safeParam = param;
-            }
+            safeParam = allowedValues[2];
         }
 
         String[] argsEnv = {safeParam};
@@ -76,6 +74,11 @@ public class BenchmarkTest00007 extends HttpServlet {
             System.out.println("Problem executing cmdi - TestCase");
             response.getWriter()
                     .println("Problem executing cmdi: An error occurred");
+            return;
+        } catch (Exception e) {
+            System.out.println("Problem executing cmdi - TestCase (Unexpected)");
+            response.getWriter()
+                    .println("Problem executing cmdi: An unexpected error occurred");
             return;
         }
     }

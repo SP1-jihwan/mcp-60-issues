@@ -92,6 +92,11 @@ public class BenchmarkTest00002 extends HttpServlet {
             response.getWriter()
                     .println(
                             "Problem getting FileOutputStream: IO Error occurred");
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred");
+            response.getWriter()
+                    .println(
+                            "Problem getting FileOutputStream: An error occurred");
         } finally {
             if (fos != null) {
                 try {
