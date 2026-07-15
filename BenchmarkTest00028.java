@@ -58,9 +58,7 @@ public class BenchmarkTest00028 extends HttpServlet {
             }
             fos = new java.io.FileOutputStream(pathFilter(fileName), false);
             response.getWriter()
-                    .println(
-                            "Now ready to write to file: "
-                                    + org.owasp.esapi.ESAPI.encoder().encodeForHTML(fileName));
+                    .println("Now ready to write to file.");
 
         } catch (java.io.FileNotFoundException e) {
             System.out.println("Couldn't open FileOutputStream");
@@ -100,7 +98,7 @@ public class BenchmarkTest00028 extends HttpServlet {
             param = path;
         }
         
-        String safeParam = "";
+        String safeParam = "file1.txt";
         if (param != null) {
             switch (param) {
                 case "file1.txt":
@@ -110,10 +108,7 @@ public class BenchmarkTest00028 extends HttpServlet {
                     safeParam = "file2.txt";
                     break;
                 default:
-                    safeParam = param.replaceAll("/", "")
-                                     .replaceAll("\\\\", "")
-                                     .replaceAll("\\.", "")
-                                     .replaceAll("&", "");
+                    safeParam = "file1.txt";
                     break;
             }
         }

@@ -76,15 +76,13 @@ public class BenchmarkTest00001 extends HttpServlet {
             if (fileName == null) {
                 throw new java.io.FileNotFoundException("File name is null");
             }
-            fis = new java.io.FileInputStream(pathFilter(pathFilter(new java.io.File(fileName))));
+            fis = new java.io.FileInputStream(new java.io.File(pathFilter(fileName)));
             byte[] b = new byte[1000];
             int size = fis.read(b);
             if (size != -1) {
                 response.getWriter()
                         .println(
-                                "The beginning of file: '"
-                                        + org.owasp.esapi.ESAPI.encoder().encodeForHTML(fileName)
-                                        + "' is:\n\n"
+                                "The beginning of file is:\n\n"
                                         + org.owasp
                                                 .esapi
                                                 .ESAPI
@@ -93,9 +91,7 @@ public class BenchmarkTest00001 extends HttpServlet {
             } else {
                 response.getWriter()
                         .println(
-                                "The beginning of file: '"
-                                        + org.owasp.esapi.ESAPI.encoder().encodeForHTML(fileName)
-                                        + "' is empty.");
+                                "The beginning of file is empty.");
             }
         } catch (java.io.FileNotFoundException e) {
             System.out.println("Couldn't open FileInputStream");
@@ -124,11 +120,10 @@ public class BenchmarkTest00001 extends HttpServlet {
         }
     }
 
-    private static java.io.File pathFilter(java.io.File file) {
-        if (file == null) {
+    private static String pathFilter(String path) {
+        if (path == null) {
             return null;
         }
-        String path = file.getPath();
         String baseDir = org.owasp.benchmark.helpers.Utils.TESTFILES_DIR;
         String param = "";
         
@@ -141,7 +136,7 @@ public class BenchmarkTest00001 extends HttpServlet {
             param = path;
         }
         
-        String safeParam = "";
+        String safeParam = "file1.txt";
         if (param != null) {
             switch (param) {
                 case "file1.txt":
@@ -151,14 +146,11 @@ public class BenchmarkTest00001 extends HttpServlet {
                     safeParam = "file2.txt";
                     break;
                 default:
-                    safeParam = param.replaceAll("/", "")
-                                     .replaceAll("\\\\", "")
-                                     .replaceAll("\\.", "")
-                                     .replaceAll("&", "");
+                    safeParam = "file1.txt";
                     break;
             }
         }
         
-        return new java.io.File(baseDir + safeParam);
+        return baseDir + safeParam;
     }
 }
